@@ -4,8 +4,11 @@ const createError = require('http-errors');
 exports.getAllPosts = async (req, res, next) => {
     try {
         const posts = await Posts.find().populate({path:'createBy comments',select : '-password -__v -hashedSalt',populate:{
-            path : 'sendBy',
-            select : '-password -__v -hashedSalt'
+            path : 'sendBy liked',
+            select : '-password -__v -hashedSalt',
+            populate:{
+                path : 'liked'
+            }
         }})
         const totalPosts = await Posts.countDocuments({})
         if (!posts) throw createError.NotFound('NO POSTS FOUND')
@@ -133,6 +136,43 @@ exports.postdelById = async (req, res, next) => {
             message: "Post Deleted Successfully",
             data: deletedPost
         });
+    } catch (err) {
+        next(err);
+    }
+}
+
+
+exports.addLikesToComment = async (req, res, next) => {
+    if (!req.body) {
+        const error = new Error("No Body Found");
+        error.statusCode = 422;
+        return next(error);
+    }
+
+    try {
+        console.log(req.query.post_id,req.query.comment_id)
+        const post = await Posts.find({ _id: req.query.post_id })
+       await post[0].comments.forEach((element)=>{
+           if(element._id == req.query.comment_id){
+             element.liked.push(req.payload.userId)  
+           }
+        })
+  
+        await Posts.findOneAndUpdate({ _id: req.query.post_id }, { $set: post[0] }, (err, docs) => {
+
+            if (err) {
+                res.status(500).json({
+                    error: err
+                });
+            } else {
+                docs.comments.push(req.body.comment)
+                res.status(200).json({
+                    statusCode: 200,
+                    message: "Liked",
+                    data: post[0]
+                });
+            }
+        })
     } catch (err) {
         next(err);
     }

@@ -8,6 +8,7 @@ router.post('/create',verifyAccessToken, postsController.createPosts);
 
 router.put('/edit/:id' ,verifyAccessToken,postsController.editPosts);
 router.put('/addcomment/:id' ,verifyAccessToken,postsController.addCommentToPosts);
+router.put('/addlike' ,verifyAccessToken,postsController.addLikesToComment);
 
 router.delete('/delete/:id',verifyAccessToken,postsController.postdelById);
 
